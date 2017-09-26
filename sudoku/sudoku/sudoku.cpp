@@ -37,15 +37,15 @@ public:
 	bool isinblock(int num, int blocknum);//数字是否在3*3的小块中已存在
 	int insert(int num, int blocknum, int marked[]);
 	int insert(int num, int x, int y, int marked[]);
-	void printsudoku();
+	void printsudoku(char *s, int &count_s);
 	bool del(int judge, int blocknum, int pos);
 };
 
-void getsudoku(char * string);
-void solve(sudoku sudo, int x[], int y[],int total, int & count);
+void getsudoku(char * string, char *str, int &count_s);
+void solve(sudoku sudo, int x[], int y[],int total, int & count, char *str, int &count_s);
 bool isAllNum(char * string);
-void produce(int total, int nums[], int block_num, int & count_total, int count_nums, sudoku s);
-
+void produce(int total, int nums[], int block_num, int & count_total, int count_nums, sudoku s, char *str, int &count_s);
+void outputfile(char* s, int &count_s);
 
 int main(int argc, char* argv[])
 {
@@ -54,9 +54,33 @@ int main(int argc, char* argv[])
 	s1 = "-c";//生成数独终局
 	s2 = "-s";//解数独
 
-	int nums[9] = { 7,1,2,3,4,5,6,8,9 };
+	char * str = new char [100000];//用来存储输出
+	int count_s = 0;
+
+	srand((unsigned)(time(NULL)));//随机数种子
+
+	int nums1[9] = { 7,1,2,3,4,5,6,8,9 };
+	int nums[9] = {7, 0 };
+	int mark[8] = { 0 };
 	int count_total = 0;
 	sudoku s;
+	//随机初始化
+	for (int i = 1; i < 9; i++) {
+		int count = 0;
+		int move = (rand() % (8-i+1) + 1);
+
+		for (int j = 1; j < 9; j++) {
+			if (mark[j-1]==0) count++;
+			if (count == move) {
+				nums[i] = nums1[j];
+				mark[j-1] = 1;
+				break;
+			}
+		}
+	//cout << nums[i] << " ";
+	}
+	//cout << endl;
+
 	if (argc < 3) {
 		cout << "the number of arguments is at least two" << endl;
 		return 0;
@@ -72,23 +96,26 @@ int main(int argc, char* argv[])
 			cout << "error: argument is not a positive integer" << endl;
 			return 0;
 		}
-		produce(total, nums, 1, count_total, 0, s);
-
+		produce(total, nums, 1, count_total, 0, s, str, count_s);
+		
 	}
 	else if (strcmp(argv[1] , s2)==0) {//解数独
-		getsudoku(argv[2]);
+
+		getsudoku(argv[2],str, count_s);
+
 	}
 	else {
 		cout << "no such instruction" << endl;
 		return 0;
 	}
-	
-	
-	cout << "end" << endl;
+//	getsudoku("a.txt", str, count_s);
+//	produce(10000, nums, 1, count_total, 0, s, str, count_s);
+	outputfile(str, count_s);
+//	delete[] str;
     return 0;
 }
 
-void getsudoku(char * string) {
+void getsudoku(char * string, char *str, int &count_s) {
 	int sudo[9][9];
 	int x[81];
 	int y[81];
@@ -114,13 +141,12 @@ void getsudoku(char * string) {
 			}
 		}
 		sudoku s(sudo);
-		solve(sudo, x, y,total, count);
+		solve(sudo, x, y,total, count, str, count_s);
 	}
-	
 
 }
 
-void solve(sudoku sudo, int x[], int y[],int total, int & count) {
+void solve(sudoku sudo, int x[], int y[],int total, int & count, char *str, int &count_s) {
 	int marked[9] = { 0 };
 	int new_count = count;
 	while (true) {
@@ -132,11 +158,11 @@ void solve(sudoku sudo, int x[], int y[],int total, int & count) {
 
 		if (new_count == total - 1) {
 			//cout << count<<" "<<new_count << endl;
-			sudo.printsudoku();
+			sudo.printsudoku(str, count_s);
 			return;
 		}
 		count = new_count + 1;
-		solve(sudo, x, y, total, count);
+		solve(sudo, x, y, total, count, str, count_s);
 		if (count == total - 1) return;
 		sudo.del(1, x[new_count], y[new_count]);
 	}
@@ -151,7 +177,8 @@ bool isAllNum(char * string) {//支持正号
 	}
 	return true;
 }
-void produce(int total, int nums[], int block_num, int & count_total, int count_nums, sudoku s) {
+
+void produce(int total, int nums[], int block_num, int & count_total, int count_nums, sudoku s, char *str, int &count_s) {
 	int marked[9] = { 0 };//标记已经试过的位置
 	int new_block_num, new_count_nums;
 	
@@ -171,17 +198,32 @@ void produce(int total, int nums[], int block_num, int & count_total, int count_
 			}
 			else {//填写至最后一个
 				count_total++;
-				s.printsudoku();//打印数独
+				s.printsudoku(str, count_s);//打印数独
 				s.del(0, new_block_num, now);
 				return;
 			}
 		}
-		produce(total, nums, new_block_num, count_total, new_count_nums, s);
+		produce(total, nums, new_block_num, count_total, new_count_nums, s, str, count_s);
 		if (count_total == total) return;
 		s.del(0, new_block_num, now);
 	}
 }
 
+void outputfile(char *s, int &count_s) {
+	if (count_s == 0) return;
+	ofstream f;
+	f.open("sudoku.txt", ios::app);
+	if (!f) {
+		cout << "sudoku.txt can't open" << endl;
+		return;
+		
+	}
+	s[count_s] = '\0';
+	f << s;
+	//cout << s;
+	f.close();
+	count_s = 0;
+}
 
 //function in sudoku
 bool sudoku::isinraw(int num, int raw_num) {//行
@@ -208,34 +250,15 @@ bool sudoku::isinblock(int num, int blocknum) {//块
 	return false;
 }
 int sudoku::insert(int num, int blocknum, int marked[]) {
-	//随机生成一个0-8序列????????????????????????????????
-	int pos1[9] = {0,1,2,3,4,5,6,7,8};
-	int mark[9] = { 0 };
-	int pos[9];
 	
-	srand((unsigned)(time(NULL) + num + blocknum));
-	for (int i = 0; i < 9; i++) {
-		int count = 0;
-		int move = (rand() % (9-i) + 1);
-	
-		for (int j = 0; j < 9; j++) {
-			if (mark[j]==0) count++;
-			if (count == move) {
-				pos[i] = pos1[j];
-				mark[j] = 1;
-				break;
-			}
-		}
-		
-	}
-
+	int pos[9] = {0,1,2,3,4,5,6,7,8};
 
 	int x;
 	int y;
 	for (int i = 0; i < 9; i++) {
 		x = (pos[i] / 3) + ((blocknum-1)/3)*3;
 		y = (pos[i] % 3 )+ (((blocknum-1)%3)*3);
-		if (this->isinraw(num, x) || this->isincolumn(num, y) || this->array[x][y]!=0 || marked[pos[i]]==1) continue;
+		if (this->array[x][y] != 0 || marked[pos[i]] == 1 || this->isinraw(num, x) || this->isincolumn(num, y)) continue;
 		else {
 			this->array[x][y] = num;
 			return pos[i];
@@ -250,7 +273,7 @@ int sudoku:: insert(int n, int x, int y, int marked[]) {
 	int blocknum = x/3*3 + y/3 + 1;
 
 	for (int i = 0; i < 9; i++) {
-		if (this->isinblock(num[i], blocknum) || this->isincolumn(num[i], y) || this->isinraw(num[i], x) || marked[num[i]-1]==1) continue;
+		if ( marked[num[i] - 1] == 1 || this->isinblock(num[i], blocknum) || this->isincolumn(num[i], y) || this->isinraw(num[i], x) ) continue;
 		else {
 			this->array[x][y] = num[i];
 			return num[i];
@@ -259,24 +282,32 @@ int sudoku:: insert(int n, int x, int y, int marked[]) {
 	return -1;
 }
 
-void sudoku::printsudoku() {
-	ofstream f;
-	f.open ("sudoku.txt", ios::app);
-	if (!f) {
-		cout << "sudoku.txt can't open" << endl;
-		return;
-	}
+void sudoku::printsudoku(char *s, int &count_s) {
+	//cout << "2";
 	for (int i = 0; i < 9; i++) {
 		for (int j = 0; j < 9; j++) {
-			if (j == 8) f << this->array[i][j];
-			else f << this->array[i][j] << " ";
+			//if (j == 8) f << this->array[i][j];
+			//else f << this->array[i][j] << " ";
 			//cout << this->array[i][j] << " ";
-		}
-		f << endl;
-	}
-	f << endl;
-	f.close();
+			
+		//	if (count_s == 100000) outputfile(s, count_s);
+			s[count_s++] =( this->array[i][j]+'0');
 
+			if (count_s == 100000) outputfile(s, count_s);
+
+			if (j != 8) s[count_s++] = ' ';
+
+			if (count_s == 100000) outputfile(s, count_s);
+		}
+		//f << endl;
+		s[count_s++] = '\n';
+
+		if (count_s == 100000) outputfile(s, count_s);
+	}
+	//f << endl;
+	s[count_s++] = '\n';
+
+	if (count_s == 100000) outputfile(s, count_s);
 
 }
 bool sudoku::del(int judge, int blocknum, int pos) {
