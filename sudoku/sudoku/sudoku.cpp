@@ -1,7 +1,7 @@
 // sudoku.cpp: 定义控制台应用程序的入口点。
 //
 
-#include "stdafx.h"
+//#include "stdafx.h"
 #include<iostream>
 #include<fstream>
 #include<string>
@@ -286,11 +286,7 @@ void sudoku::printsudoku(char *s, int &count_s) {
 	//cout << "2";
 	for (int i = 0; i < 9; i++) {
 		for (int j = 0; j < 9; j++) {
-			//if (j == 8) f << this->array[i][j];
-			//else f << this->array[i][j] << " ";
-			//cout << this->array[i][j] << " ";
-			
-		//	if (count_s == 100000) outputfile(s, count_s);
+			if (count_s == 100000) outputfile(s, count_s);
 			s[count_s++] =( this->array[i][j]+'0');
 
 			if (count_s == 100000) outputfile(s, count_s);
